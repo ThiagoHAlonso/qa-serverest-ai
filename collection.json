@@ -1,0 +1,1700 @@
+{
+  "info": {
+    "_postman_id": "0d94e0bc-b5cb-46fe-a475-c07b1fc1c8dc",
+    "name": "ServeRest - Coleção Completa",
+    "description": "Collection completa da API ServeRest (https://serverest.dev)\nCobre todos os endpoints: Login, Usuários, Produtos e Carrinhos.\n\n✅ Inclui:\n- Variáveis de ambiente automáticas\n- Script de login automático\n- Testes de status code e estrutura\n- Fluxos de GET, POST, PUT e DELETE\n\nBaseURL: https://serverest.dev\n\nAutor: Thiago Alonso | Portfolio QA",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "53824340",
+    "_collection_link": "https://go.postman.co/collection/53824340-0d94e0bc-b5cb-46fe-a475-c07b1fc1c8dc?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Login",
+      "item": [
+        {
+          "name": "POST - Realizar Login",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Cria um admin novo (email único) antes de logar, garantindo credenciais sempre válidas",
+                  "var timestamp = Date.now();",
+                  "var loginEmail = 'admin_' + timestamp + '@qa.com';",
+                  "var loginPassword = 'Teste@123';",
+                  "",
+                  "pm.sendRequest({",
+                  "    url: pm.collectionVariables.get('baseUrl') + '/usuarios',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json' },",
+                  "    body: {",
+                  "        mode: 'raw',",
+                  "        raw: JSON.stringify({",
+                  "            nome: 'Admin Login QA',",
+                  "            email: loginEmail,",
+                  "            password: loginPassword,",
+                  "            administrador: 'true'",
+                  "        })",
+                  "    }",
+                  "}, function (err, res) {",
+                  "    if (err) {",
+                  "        console.log('Erro ao criar usuário de login:', err);",
+                  "    } else {",
+                  "        console.log('Usuário de login criado com sucesso:', loginEmail);",
+                  "    }",
+                  "    pm.collectionVariables.set('loginEmail', loginEmail);",
+                  "    pm.collectionVariables.set('loginPassword', loginPassword);",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 - Login realizado com sucesso', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response tem campo message', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('message');",
+                  "    pm.expect(json.message).to.eql('Login realizado com sucesso');",
+                  "});",
+                  "",
+                  "pm.test('Response tem Bearer token', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('authorization');",
+                  "    pm.expect(json.authorization).to.include('Bearer');",
+                  "    // Salva o token automaticamente na variável da collection",
+                  "    pm.collectionVariables.set('token', json.authorization);",
+                  "    console.log('✅ Token salvo:', json.authorization);",
+                  "});",
+                  "",
+                  "pm.test('Tempo de resposta menor que 2000ms', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{loginEmail}}\",\n  \"password\": \"{{loginPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "login"
+              ]
+            },
+            "description": "Autentica um usuário e retorna um Bearer Token válido por 10 minutos.\n\n⚠️ O script de Test salva o token automaticamente na variável {{token}}.\n\nUse um usuário administrador para ter acesso às rotas de produtos."
+          },
+          "response": [
+            {
+              "name": "200 - Login com sucesso",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"fulano@qa.com\",\n  \"password\": \"teste\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "login"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"message\": \"Login realizado com sucesso\",\n  \"authorization\": \"Bearer {{supabase_service_role_api_key_0hsq}}...\"\n}"
+            },
+            {
+              "name": "401 - Credenciais inválidas",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"emailinvalido@qa.com\",\n  \"password\": \"senhaerrada\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "login"
+                  ]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"message\": \"Email e/ou senha inválidos\"\n}"
+            },
+            {
+              "name": "400 - Body inválido (sem senha)",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"fulano@qa.com\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "login"
+                  ]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"password\": \"password é obrigatório\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST - Login com Email Inválido (Negativo)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 401 - Credenciais inválidas retorna Unauthorized', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test('Mensagem de erro correta', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.message).to.eql('Email e/ou senha inválidos');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"naoexiste@email.com\",\n  \"password\": \"senhaerrada\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "login"
+              ]
+            },
+            "description": "Cenário negativo — testa login com credenciais inválidas. Deve retornar 401."
+          },
+          "response": []
+        }
+      ],
+      "description": "Autenticação de usuário. Retorna um Bearer Token válido por 10 minutos que deve ser usado nas rotas protegidas."
+    },
+    {
+      "name": "Usuários",
+      "item": [
+        {
+          "name": "GET - Listar Todos os Usuários",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 - Lista retornada com sucesso', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response possui campo quantidade', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('quantidade');",
+                  "    pm.expect(json.quantidade).to.be.a('number');",
+                  "});",
+                  "",
+                  "pm.test('Response possui array de usuarios', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('usuarios');",
+                  "    pm.expect(json.usuarios).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Quantidade bate com o tamanho do array', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.quantidade).to.eql(json.usuarios.length);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://serverest.dev/usuarios",
+              "protocol": "https",
+              "host": [
+                "serverest",
+                "dev"
+              ],
+              "path": [
+                "usuarios"
+              ]
+            },
+            "description": "Retorna todos os usuários cadastrados. Não requer autenticação."
+          },
+          "response": []
+        },
+        {
+          "name": "GET - Listar Usuários com Filtro",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Filtro por administrador=true retorna apenas admins', function () {",
+                  "    var json = pm.response.json();",
+                  "    json.usuarios.forEach(function(u) {",
+                  "        pm.expect(u.administrador).to.eql('true');",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://serverest.dev/usuarios?administrador=true",
+              "protocol": "https",
+              "host": [
+                "serverest",
+                "dev"
+              ],
+              "path": [
+                "usuarios"
+              ],
+              "query": [
+                {
+                  "key": "administrador",
+                  "value": "true",
+                  "description": "Filtra por tipo: true = admin | false = comum"
+                },
+                {
+                  "key": "nome",
+                  "value": "",
+                  "description": "Filtra por nome do usuário",
+                  "disabled": true
+                },
+                {
+                  "key": "email",
+                  "value": "",
+                  "description": "Filtra por email",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Lista usuários com filtro por query params. Exemplo filtra apenas administradores."
+          },
+          "response": []
+        },
+        {
+          "name": "POST - Cadastrar Novo Usuário (Admin)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Gera email único para evitar conflito de cadastro\nvar timestamp = Date.now();\npm.collectionVariables.set('emailTemp', 'usuario_' + timestamp + '@qa.com');\nconsole.log('Email gerado:', pm.collectionVariables.get('emailTemp'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201 - Usuário criado com sucesso', function () {\n    pm.response.to.have.status(201);\n});\n\npm.test('Response possui _id do novo usuário', function () {\n    var json = pm.response.json();\n    pm.expect(json).to.have.property('_id');\n    // Salva o ID para usar nos próximos requests\n    pm.collectionVariables.set('usuarioId', json._id);\n    console.log('✅ usuarioId salvo:', json._id);\n});\n\npm.test('Mensagem de cadastro correto', function () {\n    var json = pm.response.json();\n    pm.expect(json.message).to.eql('Cadastro realizado com sucesso');\n});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Thiago QA Tester\",\n  \"email\": \"{{emailTemp}}\",\n  \"password\": \"teste\",\n  \"administrador\": \"true\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios"
+              ]
+            },
+            "description": "Cria um novo usuário administrador.\n\n✅ O Test Script salva o `_id` retornado na variável {{usuarioId}} automaticamente.\n\nNota: emails devem ser únicos. O Pre-request script gera um email único com timestamp."
+          },
+          "response": []
+        },
+        {
+          "name": "GET - Buscar Usuário por ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 - Usuário encontrado', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Usuário possui campos obrigatórios', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('nome');",
+                  "    pm.expect(json).to.have.property('email');",
+                  "    pm.expect(json).to.have.property('password');",
+                  "    pm.expect(json).to.have.property('administrador');",
+                  "    pm.expect(json).to.have.property('_id');",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://serverest.dev/usuarios/{{usuarioId}}",
+              "protocol": "https",
+              "host": [
+                "serverest",
+                "dev"
+              ],
+              "path": [
+                "usuarios",
+                "{{usuarioId}}"
+              ]
+            },
+            "description": "Busca um usuário específico pelo ID. Popule a variável {{usuarioId}} após criar um usuário via POST."
+          },
+          "response": []
+        },
+        {
+          "name": "POST - Cadastrar Usuário Comum",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201 - Usuário comum criado', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Usuário não é administrador', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('_id');",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var timestamp = Date.now(); pm.collectionVariables.set('emailComum', 'comprador_' + timestamp + '@loja.com');"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Usuário Comum da Loja\",\n  \"email\": \"{{emailComum}}\",\n  \"password\": \"123456\",\n  \"administrador\": \"false\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://serverest.dev/usuarios",
+              "protocol": "https",
+              "host": [
+                "serverest",
+                "dev"
+              ],
+              "path": [
+                "usuarios"
+              ]
+            },
+            "description": "Cria um usuário comum (não administrador). Usuários comuns podem montar carrinhos mas não gerenciam produtos."
+          },
+          "response": []
+        },
+        {
+          "name": "POST - Cadastrar Usuário (E-mail já existente - Negativo)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400 - Email duplicado retorna Bad Request', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Mensagem de email já utilizado', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.message).to.eql('Este email já está sendo usado');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Duplicado Teste\",\n  \"email\": \"{{emailTemp}}\",\n  \"password\": \"teste\",\n  \"administrador\": \"true\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios"
+              ]
+            },
+            "description": "Cenário negativo — tenta cadastrar com email já existente. Deve retornar 400."
+          },
+          "response": []
+        },
+        {
+          "name": "PUT - Editar Usuário por ID",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var timestamp = Date.now();",
+                  "pm.collectionVariables.set('emailEdit', 'editado_' + timestamp + '@qa.com');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 - Usuário atualizado com sucesso', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Mensagem de edição correta', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.message).to.eql('Registro alterado com sucesso');",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Thiago QA Atualizado\",\n  \"email\": \"{{emailEdit}}\",\n  \"password\": \"novaSenha123\",\n  \"administrador\": \"true\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://serverest.dev/usuarios/{{usuarioId}}",
+              "protocol": "https",
+              "host": [
+                "serverest",
+                "dev"
+              ],
+              "path": [
+                "usuarios",
+                "{{usuarioId}}"
+              ]
+            },
+            "description": "Atualiza todos os dados de um usuário pelo ID. O PUT do ServeRest exige o body completo.\n\nSe o ID não existir, cria um novo usuário (comportamento upsert)."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE - Remover Usuário por ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 - Usuário deletado com sucesso', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Mensagem de exclusão correta', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.message).to.eql('Registro excluído com sucesso');",
+                  "});",
+                  "",
+                  "// Limpa o ID da variável após deletar",
+                  "pm.collectionVariables.set('usuarioId', '');"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "https://serverest.dev/usuarios/{{usuarioId}}",
+              "protocol": "https",
+              "host": [
+                "serverest",
+                "dev"
+              ],
+              "path": [
+                "usuarios",
+                "{{usuarioId}}"
+              ]
+            },
+            "description": "Remove um usuário pelo ID.\n\n⚠️ Usuários com carrinho ativo não podem ser deletados (retorna 400)."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE - Remover Usuário com ID Inexistente (Negativo)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 - Nenhum registro excluído (ID não encontrado)', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Mensagem indica que não havia nada para deletar', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.message).to.eql('Nenhum registro excluído');",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "https://serverest.dev/usuarios/idqueNaoExiste123",
+              "protocol": "https",
+              "host": [
+                "serverest",
+                "dev"
+              ],
+              "path": [
+                "usuarios",
+                "idqueNaoExiste123"
+              ]
+            },
+            "description": "Cenário negativo — deleta com ID inexistente. O ServeRest retorna 200 mas com mensagem 'Nenhum registro excluído'."
+          },
+          "response": []
+        }
+      ],
+      "description": "CRUD completo de usuários da loja virtual.\n\nNota: para cadastrar um usuário administrador, use `\"administrador\": \"true\"`."
+    },
+    {
+      "name": "Produtos",
+      "item": [
+        {
+          "name": "GET - Listar Todos os Produtos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 - Produtos listados com sucesso', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response possui campo quantidade', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('quantidade');",
+                  "});",
+                  "",
+                  "pm.test('Response possui array de produtos', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('produtos');",
+                  "    pm.expect(json.produtos).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Cada produto tem nome, preco e quantidade', function () {",
+                  "    var json = pm.response.json();",
+                  "    if (json.produtos.length > 0) {",
+                  "        json.produtos.forEach(function(p) {",
+                  "            pm.expect(p).to.have.property('nome');",
+                  "            pm.expect(p).to.have.property('preco');",
+                  "            pm.expect(p).to.have.property('quantidade');",
+                  "        });",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://serverest.dev/produtos",
+              "protocol": "https",
+              "host": [
+                "serverest",
+                "dev"
+              ],
+              "path": [
+                "produtos"
+              ]
+            },
+            "description": "Lista todos os produtos cadastrados. Não requer autenticação."
+          },
+          "response": []
+        },
+        {
+          "name": "GET - Listar Produtos com Filtro",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://serverest.dev/produtos?nome=Logitech MX Master",
+              "protocol": "https",
+              "host": [
+                "serverest",
+                "dev"
+              ],
+              "path": [
+                "produtos"
+              ],
+              "query": [
+                {
+                  "key": "nome",
+                  "value": "Logitech MX Master",
+                  "description": "Filtra pelo nome exato do produto"
+                },
+                {
+                  "key": "preco",
+                  "value": "",
+                  "description": "Filtra pelo preço",
+                  "disabled": true
+                },
+                {
+                  "key": "descricao",
+                  "value": "",
+                  "description": "Filtra pela descrição",
+                  "disabled": true
+                },
+                {
+                  "key": "quantidade",
+                  "value": "",
+                  "description": "Filtra pela quantidade em estoque",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Filtra produtos por query params. Útil para verificar se um produto específico existe antes de criar."
+          },
+          "response": []
+        },
+        {
+          "name": "POST - Cadastrar Novo Produto (Requer Auth)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201 - Produto criado com sucesso', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Response possui _id do novo produto', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('_id');",
+                  "    pm.collectionVariables.set('produtoId', json._id);",
+                  "    console.log('✅ produtoId salvo:', json._id);",
+                  "});",
+                  "",
+                  "pm.test('Mensagem de cadastro correto', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.message).to.eql('Cadastro realizado com sucesso');",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{token}}",
+                "description": "Bearer token gerado no Login"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Teclado Mecânico Redragon\",\n  \"preco\": 350,\n  \"descricao\": \"Teclado mecânico RGB com switches Brown, excelente para programadores e gamers.\",\n  \"quantidade\": 50\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://serverest.dev/produtos",
+              "protocol": "https",
+              "host": [
+                "serverest",
+                "dev"
+              ],
+              "path": [
+                "produtos"
+              ]
+            },
+            "description": "Cria um novo produto. Requer token de administrador no header Authorization.\n\n✅ O Test Script salva o `_id` na variável {{produtoId}}.\n\n⚠️ O nome do produto deve ser único no sistema."
+          },
+          "response": []
+        },
+        {
+          "name": "GET - Buscar Produto por ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 - Produto encontrado', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Produto possui todos os campos', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('nome');",
+                  "    pm.expect(json).to.have.property('preco');",
+                  "    pm.expect(json).to.have.property('descricao');",
+                  "    pm.expect(json).to.have.property('quantidade');",
+                  "    pm.expect(json).to.have.property('_id');",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://serverest.dev/produtos/{{produtoId}}",
+              "protocol": "https",
+              "host": [
+                "serverest",
+                "dev"
+              ],
+              "path": [
+                "produtos",
+                "{{produtoId}}"
+              ]
+            },
+            "description": "Busca produto pelo ID. Popule {{produtoId}} após criar um produto via POST."
+          },
+          "response": []
+        },
+        {
+          "name": "POST - Cadastrar Produto Sem Token (Negativo)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 401 - Sem token retorna Unauthorized', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test('Mensagem de token inválido', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.message).to.include('Token de acesso ausente, inválido, expirado ou usuário do token não existe mais');",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{bearer_token_0ag7}}",
+                "description": "Token inválido intencional"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Produto Sem Auth\",\n  \"preco\": 100,\n  \"descricao\": \"Teste sem autenticação\",\n  \"quantidade\": 10\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://serverest.dev/produtos",
+              "protocol": "https",
+              "host": [
+                "serverest",
+                "dev"
+              ],
+              "path": [
+                "produtos"
+              ]
+            },
+            "description": "Cenário negativo — tenta criar produto sem token válido. Deve retornar 401."
+          },
+          "response": []
+        },
+        {
+          "name": "PUT - Editar Produto por ID (Requer Auth)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 - Produto atualizado', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Mensagem de edição correta', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.message).to.eql('Registro alterado com sucesso');",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{token}}",
+                "description": "Bearer token de administrador"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Teclado Mecânico Redragon - Edição Especial\",\n  \"preco\": 320,\n  \"descricao\": \"Preço atualizado. Teclado mecânico RGB premium com switches Brown.\",\n  \"quantidade\": 75\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://serverest.dev/produtos/{{produtoId}}",
+              "protocol": "https",
+              "host": [
+                "serverest",
+                "dev"
+              ],
+              "path": [
+                "produtos",
+                "{{produtoId}}"
+              ]
+            },
+            "description": "Atualiza os dados de um produto. Requer autenticação de administrador.\n\nO PUT exige o body completo (todos os campos obrigatórios)."
+          },
+          "response": []
+        }
+      ],
+      "description": "CRUD completo de produtos da loja.\n\n⚠️ POST, PUT e DELETE requerem autenticação de usuário administrador.\nO Token Bearer deve estar na variável {{token}} (gerado pelo request de Login)."
+    },
+    {
+      "name": "Carrinhos",
+      "item": [
+        {
+          "name": "GET - Listar Todos os Carrinhos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 - Carrinhos listados', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response possui quantidade e array carrinhos', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('quantidade');",
+                  "    pm.expect(json).to.have.property('carrinhos');",
+                  "    pm.expect(json.carrinhos).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Cada carrinho tem precoTotal e quantidadeTotal', function () {",
+                  "    var json = pm.response.json();",
+                  "    if (json.carrinhos.length > 0) {",
+                  "        json.carrinhos.forEach(function(c) {",
+                  "            pm.expect(c).to.have.property('precoTotal');",
+                  "            pm.expect(c).to.have.property('quantidadeTotal');",
+                  "            pm.expect(c).to.have.property('idUsuario');",
+                  "        });",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://serverest.dev/carrinhos",
+              "protocol": "https",
+              "host": [
+                "serverest",
+                "dev"
+              ],
+              "path": [
+                "carrinhos"
+              ]
+            },
+            "description": "Lista todos os carrinhos ativos. Não requer autenticação para visualizar."
+          },
+          "response": []
+        },
+        {
+          "name": "GET - Listar Carrinhos com Filtro",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://serverest.dev/carrinhos?idUsuario={{usuarioId}}",
+              "protocol": "https",
+              "host": [
+                "serverest",
+                "dev"
+              ],
+              "path": [
+                "carrinhos"
+              ],
+              "query": [
+                {
+                  "key": "idUsuario",
+                  "value": "{{usuarioId}}",
+                  "description": "Filtra pelo ID do usuário dono do carrinho"
+                },
+                {
+                  "key": "precoTotal",
+                  "value": "",
+                  "description": "Filtra pelo preço total do carrinho",
+                  "disabled": true
+                },
+                {
+                  "key": "quantidadeTotal",
+                  "value": "",
+                  "description": "Filtra pela quantidade total de itens",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Filtra carrinhos por query params. Exemplo: filtra pelo carrinho de um usuário específico."
+          },
+          "response": []
+        },
+        {
+          "name": "POST - Criar Carrinho (Requer Auth)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201 - Carrinho criado com sucesso', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Mensagem de criação correta', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.message).to.eql('Cadastro realizado com sucesso');",
+                  "});",
+                  "",
+                  "pm.test('Response possui _id do carrinho', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('_id');",
+                  "    pm.collectionVariables.set('carrinhoId', json._id);",
+                  "    console.log('✅ carrinhoId salvo:', json._id);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{token}}",
+                "description": "Bearer token do usuário (não precisa ser admin)"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"produtos\": [\n    {\n      \"idProduto\": \"{{produtoId}}\",\n      \"quantidade\": 2\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://serverest.dev/carrinhos",
+              "protocol": "https",
+              "host": [
+                "serverest",
+                "dev"
+              ],
+              "path": [
+                "carrinhos"
+              ]
+            },
+            "description": "Cria um carrinho com produtos.\n\nRegras:\n- Cada usuário pode ter apenas 1 carrinho ativo\n- O mesmo produto não pode aparecer duplicado\n- O {{produtoId}} deve ser um produto existente\n- A quantidade não pode exceder o estoque disponível\n\n✅ O Test Script salva o `_id` na variável {{carrinhoId}}."
+          },
+          "response": []
+        },
+        {
+          "name": "GET - Buscar Carrinho por ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 - Carrinho encontrado', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Carrinho possui estrutura correta', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('produtos');",
+                  "    pm.expect(json).to.have.property('precoTotal');",
+                  "    pm.expect(json).to.have.property('quantidadeTotal');",
+                  "    pm.expect(json).to.have.property('idUsuario');",
+                  "    pm.expect(json).to.have.property('_id');",
+                  "    pm.expect(json.produtos).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://serverest.dev/carrinhos/{{carrinhoId}}",
+              "protocol": "https",
+              "host": [
+                "serverest",
+                "dev"
+              ],
+              "path": [
+                "carrinhos",
+                "{{carrinhoId}}"
+              ]
+            },
+            "description": "Busca um carrinho específico pelo ID. Popule {{carrinhoId}} após criar um carrinho via POST."
+          },
+          "response": []
+        },
+        {
+          "name": "POST - Criar Segundo Carrinho (Negativo - Duplicado)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 400 - Usuário já possui carrinho', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Mensagem de carrinho duplicado', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.message).to.eql('Não é permitido ter mais de 1 carrinho');",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"produtos\": [\n    {\n      \"idProduto\": \"{{produtoId}}\",\n      \"quantidade\": 1\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://serverest.dev/carrinhos",
+              "protocol": "https",
+              "host": [
+                "serverest",
+                "dev"
+              ],
+              "path": [
+                "carrinhos"
+              ]
+            },
+            "description": "Cenário negativo — tenta criar um segundo carrinho para o mesmo usuário. Deve retornar 400."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE - Concluir Compra (Remove Carrinho)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 - Compra concluída com sucesso', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Mensagem de compra concluída', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.message).to.eql('Registro excluído com sucesso');",
+                  "});",
+                  "",
+                  "// Limpa a variável de carrinho",
+                  "pm.collectionVariables.set('carrinhoId', '');"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{token}}",
+                "description": "Bearer token do usuário dono do carrinho"
+              }
+            ],
+            "url": {
+              "raw": "https://serverest.dev/carrinhos/concluir-compra",
+              "protocol": "https",
+              "host": [
+                "serverest",
+                "dev"
+              ],
+              "path": [
+                "carrinhos",
+                "concluir-compra"
+              ]
+            },
+            "description": "Conclui a compra do carrinho do usuário autenticado.\n\n✅ Comportamento:\n- Remove o carrinho do sistema\n- NÃO repõe o estoque dos produtos (a compra foi concluída)\n- Só afeta o carrinho do usuário cujo token foi passado"
+          },
+          "response": []
+        },
+        {
+          "name": "POST - Recriar Carrinho para Cancelamento",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201 - Carrinho recriado com sucesso', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('carrinhoId', json._id);",
+                  "console.log('✅ carrinhoId recriado:', json._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{token}}",
+                "description": "Bearer token gerado no Login"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"produtos\": [\n    {\n      \"idProduto\": \"{{produtoId}}\",\n      \"quantidade\": 1\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/carrinhos"
+          }
+        },
+        {
+          "name": "DELETE - Cancelar Compra (Repõe Estoque)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 - Compra cancelada com sucesso', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Mensagem de cancelamento', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.message).to.include('Registro excluído com sucesso');",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('carrinhoId', '');"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{token}}",
+                "description": "Bearer token do usuário dono do carrinho"
+              }
+            ],
+            "url": {
+              "raw": "https://serverest.dev/carrinhos/cancelar-compra",
+              "protocol": "https",
+              "host": [
+                "serverest",
+                "dev"
+              ],
+              "path": [
+                "carrinhos",
+                "cancelar-compra"
+              ]
+            },
+            "description": "Cancela a compra e descarta o carrinho do usuário autenticado.\n\n⚠️ Diferença do concluir-compra:\n- Remove o carrinho\n- REPÕE o estoque dos produtos (a compra NÃO foi concluída)\n- Útil para testes de cancelamento de pedido"
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE - Concluir Compra Sem Carrinho (Negativo)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 - Sem carrinho para concluir', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Mensagem de nenhum registro excluído', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.message).to.eql('Não foi encontrado carrinho para esse usuário');",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{token}}"
+              }
+            ],
+            "url": {
+              "raw": "https://serverest.dev/carrinhos/concluir-compra",
+              "protocol": "https",
+              "host": [
+                "serverest",
+                "dev"
+              ],
+              "path": [
+                "carrinhos",
+                "concluir-compra"
+              ]
+            },
+            "description": "Cenário negativo — tenta concluir compra sem ter um carrinho ativo. Deve retornar mensagem indicando que não há carrinho."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE - Remover Produto por ID (Requer Auth)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 - Produto deletado com sucesso', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Mensagem de exclusão correta', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.message).to.eql('Registro excluído com sucesso');",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('produtoId', '');"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{token}}",
+                "description": "Bearer token de administrador"
+              }
+            ],
+            "url": {
+              "raw": "https://serverest.dev/produtos/{{produtoId}}",
+              "protocol": "https",
+              "host": [
+                "serverest",
+                "dev"
+              ],
+              "path": [
+                "produtos",
+                "{{produtoId}}"
+              ]
+            },
+            "description": "Remove um produto pelo ID.\n\n⚠️ Produtos presentes em carrinhos ativos não podem ser deletados. Deve-se cancelar o carrinho antes."
+          },
+          "response": []
+        }
+      ],
+      "description": "Gerenciamento de carrinhos de compra.\n\n⚠️ Todas as rotas de Carrinhos requerem autenticação de usuário (não precisa ser admin).\n\nRegras importantes:\n- Cada usuário pode ter apenas 1 carrinho\n- Um produto não pode aparecer duplicado no mesmo carrinho\n- Use DELETE /concluir-compra para finalizar e remover o carrinho\n- Use DELETE /cancelar-compra para cancelar e repor o estoque"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://serverest.dev"
+    },
+    {
+      "key": "supabase_service_role_api_key_0hsq",
+      "secret": true
+    },
+    {
+      "key": "bearer_token_0ag7",
+      "secret": true
+    },
+    {
+      "key": "bearer_token_1e7n",
+      "secret": true
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "emailTemp",
+      "value": ""
+    },
+    {
+      "key": "usuarioId",
+      "value": ""
+    },
+    {
+      "key": "loginEmail",
+      "value": ""
+    },
+    {
+      "key": "loginPassword",
+      "value": ""
+    },
+    {
+      "key": "emailComum",
+      "value": ""
+    },
+    {
+      "key": "emailEdit",
+      "value": ""
+    },
+    {
+      "key": "produtoId",
+      "value": ""
+    },
+    {
+      "key": "carrinhoId",
+      "value": ""
+    }
+  ]
+}
