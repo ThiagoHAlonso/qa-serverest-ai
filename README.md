@@ -1,6 +1,6 @@
 # 🧪 QA Pipeline — ServeRest + Automação + IA
 
-[svg](https://github.com/ThiagoHAlonso/qa-serverest-ai#-qa-pipeline--serverest--automa%C3%A7%C3%A3o--ia)
+(https://github.com/ThiagoHAlonso/qa-serverest-ai#-qa-pipeline--serverest--automa%C3%A7%C3%A3o--ia)
 
 Projeto de portfólio que demonstra uma estratégia de QA completa sobre a API [ServeRest](https://serverest.dev/), combinando testes de API, testes E2E e uma camada de ferramentas de IA para geração, revisão e triagem de testes.
 
@@ -12,7 +12,7 @@ Mostrar, na prática, como um QA pode usar IA como parte do processo de qualidad
 
 ## 🏗️ Arquitetura
 
-[svg](https://github.com/ThiagoHAlonso/qa-serverest-ai#%EF%B8%8F-arquitetura)
+(https://github.com/ThiagoHAlonso/qa-serverest-ai#%EF%B8%8F-arquitetura)
 
 ```text
 ServeRest (alvo)
