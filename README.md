@@ -20,7 +20,7 @@ ServeRest (alvo)
   → GitHub Actions (CI/CD)
 🛠️ Stack
 
-svg
+
 
 Testes de API: Postman / Newman
 Testes E2E: Cypress (Page Object Model)
@@ -29,7 +29,7 @@ CI/CD: GitHub Actions
 Alvo dos testes: ServeRest — API + front-end de e-commerce fictício
 📊 Status do Projeto
 
-svg
+
 
 Fase 0 — Setup do repositório
 Fase 1 — Estratégia de QA
@@ -52,7 +52,7 @@ qa-serverest-ai/
 └── .github/workflows/   → pipelines do GitHub Actions
 🚀 Como Rodar Localmente
 
-svg
+
 
 Testes de API
 npx newman run postman/collection.json
@@ -60,12 +60,11 @@ Testes E2E
 npx cypress open
 📚 Documentação
 
-svg
+
 
 Estratégia de QA
 Handoff de progresso
 👨‍💻 Autor
 
-svg
 
 Thiago — QA em transição de carreira, com foco em automação e IA aplicada a testes.
