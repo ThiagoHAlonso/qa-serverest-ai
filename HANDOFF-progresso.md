@@ -4,45 +4,73 @@ Documento de continuidade. Cole o conteúdo disso numa nova conversa com o Claud
 
 ## O projeto
 
-Portfólio de QA integrando ServeRest, Postman/Newman, Cypress e uma camada de IA (Claude) para geração de testes, revisão e análise de falhas, com CI/CD em GitHub Actions. Repositório local do Postman em `C:\Devlopment\Solo\Postman\serverest-QA`.
+Portfólio de QA integrando ServeRest, Postman/Newman, Cypress e uma camada de IA (Claude) para geração de testes, revisão e análise de falhas, com CI/CD em GitHub Actions.
+
+- **Repositório GitHub:** https://github.com/ThiagoHAlonso/qa-serverest-ai (público)
+- **Repositório local:** `C:\Devlopment\Solo\Postman\serverest-QA`
 
 ## Roadmap (fases)
 
-- [x] **Fase 0** — Setup do repositório (README.md e ESTRATEGIA-QA.md já gerados)
-- [x] **Fase 1** — Estratégia de QA (matriz de risco por módulo: Login, Usuários, Produtos, Carrinhos)
-- [~] **Fase 2** — Testes de API (Postman/Newman) — **quase 100% completa**, 63 de 64 assertions passando, falta 1 ajuste já pronto (ver abaixo)
-- [ ] Fase 3 — Testes E2E (Cypress, reaproveitando o POM do projeto OrangeHRM)
-- [ ] Fase 4 — Casos de teste e defeitos conhecidos documentados
-- [ ] Fase 5 — Camada de IA (Test Generator, Reviewer, Failure Analyzer)
-- [ ] Fase 6 — Métricas
+- [x] **Fase 0** — Setup do repositório
+- [x] **Fase 1** — Estratégia de QA
+- [x] **Fase 2** — Testes de API (Postman/Newman) — 28 requests, 61 assertions, 0 falhas
+- [x] **Fase 3** — Testes E2E (Cypress) — **✅ COMPLETA**: 5 testes, 0 falhas, cobrindo tudo que é realmente testável via UI (ver nota sobre Carrinho abaixo)
+- [x] **Fase 4** — Casos de teste e defeitos conhecidos documentados — **✅ COMPLETA**
+- [ ] Fase 5 — Camada de IA (Test Generator, Reviewer, Failure Analyzer via @anthropic-ai/sdk)
+- [ ] Fase 6 — Métricas / dashboard
 - [ ] Fase 7 — GitHub Actions (CI/CD)
 
-## Estado da collection Postman — histórico de bugs já RESOLVIDOS
+## ✅ Fase 3 — Resultado final (Cypress)
 
-1. **`baseUrl` ausente do JSON** — a variável não existia de fato no array `"variable"` da collection, mesmo aparecendo na interface do Postman. Resolvido adicionando-a diretamente no JSON e confirmando a presença no arquivo.
-2. **Emails fixos colidindo** — "Cadastrar Novo Usuário (Admin)" e "Cadastrar Usuário Comum" usavam emails fixos (`fulano@qa.com`, `comprador@loja.com`) que já existiam no servidor. Resolvido com pre-request scripts que geram emails únicos por timestamp (`{{emailTemp}}`, `{{emailComum}}`).
-3. **Login com credenciais mortas** — o Login usava um email/senha fixos que deixaram de funcionar no ServeRest (ambiente público, dados mudam). Resolvido: o Login agora tem um pre-request script que **cria um usuário admin novo antes de logar**, com timestamp, garantindo que sempre existe uma conta válida.
-4. **Ordem de execução errada** — os "Buscar por ID" (Usuário, Produto, Carrinho) rodavam antes dos "Cadastrar/Criar" correspondentes. Resolvido reordenando os requests dentro de cada pasta.
-5. **Produto deletado cedo demais** — o "DELETE Remover Produto por ID" limpava a variável `produtoId` antes da pasta Carrinhos precisar dele. Resolvido movendo esse DELETE pro final de toda a collection.
-6. **Concluir Compra vs. Cancelar Compra disputando o mesmo carrinho** — os dois testes agiam sobre o mesmo carrinho, e o primeiro (Concluir) sempre consumia o carrinho antes do segundo (Cancelar) rodar. Resolvido duplicando o request "Criar Carrinho" e inserindo essa cópia entre os dois testes, dando um carrinho exclusivo pra cada um.
+```
+specs       │ 3 │ 0 falhas
+testes      │ 5 │ 0 falhas
+```
 
-## Único item pendente agora
+**Arquivos no repositório:**
+```
+cypress/
+├── support/pages/
+│   ├── LoginPage.js
+│   ├── CadastroUsuarioPage.js
+│   └── CadastroProdutoPage.js
+├── e2e/
+│   ├── login.cy.js              (2 testes: sucesso + senha inválida)
+│   ├── cadastro-usuario.cy.js   (2 testes: comum + administrador)
+│   └── cadastro-produto.cy.js   (1 teste: cadastro com upload de imagem)
+└── fixtures/
+    └── produto.png
+```
 
-O teste "Mensagem de cancelamento" (dentro de "DELETE - Cancelar Compra") esperava a frase **exata** `"Registro excluído com sucesso"`, mas o ServeRest retorna uma frase mais longa (avisando que o estoque foi reposto). Já troquei o assert de `.to.eql(...)` para `.to.include(...)` — só que essa correção existe apenas no `collection.json` gerado no chat, **ainda não foi copiada pra pasta local do usuário**. Nas duas últimas rodadas de Newman, o erro persistiu porque o arquivo local continuava sendo o antigo.
+**⚠️ Importante — Carrinho não foi automatizado no Cypress, e isso é intencional:** ao logar como usuário comum e acessar "Carrinho" no front-end, a tela mostra **"Em construção aguarde"** — a funcionalidade nunca foi implementada na interface. O fluxo de Carrinho já está 100% coberto via API no Postman (Fase 2); no front, não existe elemento nenhum pra automatizar. Isso vira um item de defeito/limitação conhecida na Fase 4.
 
-### Passo imediato pra fechar a Fase 2
+### Seletores confirmados por tela (referência)
 
-1. Baixar o `collection.json` mais recente compartilhado no chat (já tem o `.to.include(...)` aplicado)
-2. Substituir o arquivo em `C:\Devlopment\Solo\Postman\serverest-QA\collection.json`
-3. Rodar `npx newman run collection.json`
-4. Esperado: 64/64 assertions passando (0 falhas) — aí a Fase 2 está oficialmente completa
+- **Login:** email `data-testid="email"`, senha `data-testid="senha"`, botão `data-testid="entrar"`
+- **Cadastro de Usuário:** nome `data-testid="nome"`, email `data-testid="email"`, senha `data-testid="password"` (⚠️ diferente do login), checkbox admin `data-testid="checkbox"` (name="administrador"), botão `data-testid="cadastrarUsuario"`
+- **Cadastro de Produto:** nome `data-testid="nome"`, preço `data-testid="preco"` (name="price"), descrição `data-testid="descricao"`, quantidade `data-testid="quantity"`, imagem `data-testid="imagem"` (upload obrigatório), botão `data-testid="cadastarProdutos"` (⚠️ typo no app)
+- **Links do menu:** `data-testid="cadastrar-usuarios"`, `data-testid="cadastrar-produtos"`
 
-## Regras de ouro aprendidas (repetir sempre)
+### Comportamentos/defeitos encontrados (material pronto pra Fase 4)
 
-1. Toda edição feita **só no arquivo exportado**, sem replicar dentro do Postman, se perde no próximo export feito de dentro do Postman.
-2. Sempre que o Claude edita o `collection.json` diretamente no chat, essa edição só existe no arquivo baixado — precisa ser **copiada pra pasta local** (e idealmente reimportada no Postman) pra não se perder e pra não ser sobrescrita num próximo export.
-3. Ao exportar do Postman, prestar atenção na extensão do arquivo salvo (deve ser `collection.json`, não só `collection` sem extensão) e na pasta de destino (deve ser a pasta do projeto, não Downloads).
+1. Campo de preço no Cadastro de Produto não aceita valores decimais (ex: "2,50") — só números inteiros.
+2. Tela de Carrinho no front-end (usuário comum) mostra "Em construção aguarde" — funcionalidade não implementada na UI, só existe via API.
 
-## Depois que a Fase 2 fechar
+## ✅ Fase 4 — Documentos gerados
 
-Seguir pra Fase 3 (Cypress, reaproveitando o Page Object Model do projeto OrangeHRM: github.com/ThiagoHAlonso/first-test-E2E) e depois Fase 4 (documentar casos de teste e defeitos conhecidos).
+- `CASOS-DE-TESTE.md` — 26 casos de API + 5 casos E2E, organizados por módulo
+- `DEFEITOS-CONHECIDOS.md` — DC-01 (preço decimal) e DC-02 (carrinho não implementado no front)
+
+## Próximo passo imediato — Fase 5
+
+- **Fase 5** — Camada de IA (Test Generator, Reviewer, Failure Analyzer)
+- **Fase 6** — Métricas
+- **Fase 7** — GitHub Actions
+
+## Regras de ouro aprendidas
+
+1. Toda edição deve ser feita dentro do Postman — senão se perde no próximo export.
+2. Edição feita pelo Claude direto no arquivo precisa ser copiada pra pasta local antes do próximo export/commit sobrescrever.
+3. Debugar por causa raiz, não falha por falha.
+4. No Cypress: sempre inspecionar os seletores reais na página antes de escrever o código — evitou qualquer loop de debug na Fase 3.
+5. Nem tudo que parece "faltando testar" é um problema seu — às vezes a funcionalidade simplesmente não existe na interface, e isso também é um achado de QA válido.
