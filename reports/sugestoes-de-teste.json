@@ -1,0 +1,72 @@
+[
+  {
+    "id": "GEN-01",
+    "modulo": "Login",
+    "caso": "Login sem preencher campos obrigatórios (body vazio)",
+    "tipo": "negativo",
+    "resultado_esperado": "Status 400 com mensagens indicando que email e password são obrigatórios"
+  },
+  {
+    "id": "GEN-02",
+    "modulo": "Produtos",
+    "caso": "Cadastrar produto utilizando token de usuário comum (não administrador)",
+    "tipo": "negativo",
+    "resultado_esperado": "Status 403 com mensagem 'Rota exclusiva para administradores'"
+  },
+  {
+    "id": "GEN-03",
+    "modulo": "Produtos",
+    "caso": "Cadastrar produto com nome já existente no catálogo",
+    "tipo": "negativo",
+    "resultado_esperado": "Status 400 com mensagem 'Já existe produto com esse nome'"
+  },
+  {
+    "id": "GEN-04",
+    "modulo": "Produtos",
+    "caso": "Cadastrar produto com preço ou quantidade com valor negativo ou tipo inválido",
+    "tipo": "borda",
+    "resultado_esperado": "Status 400 com mensagem de validação de tipo/limite numérico"
+  },
+  {
+    "id": "GEN-05",
+    "modulo": "Produtos",
+    "caso": "Excluir produto que está associado a um carrinho ativo de usuário",
+    "tipo": "fluxo combinado",
+    "resultado_esperado": "Status 400 com mensagem informando que não é permitido excluir produto que faz parte de carrinho"
+  },
+  {
+    "id": "GEN-06",
+    "modulo": "Usuários",
+    "caso": "Buscar usuário informando um ID inexistente",
+    "tipo": "borda",
+    "resultado_esperado": "Status 400 com mensagem 'Usuário não encontrado'"
+  },
+  {
+    "id": "GEN-07",
+    "modulo": "Usuários",
+    "caso": "Excluir usuário que possui carrinho cadastrado ativo",
+    "tipo": "fluxo combinado",
+    "resultado_esperado": "Status 400 com mensagem 'Não é permitido excluir usuário com carrinho cadastrado'"
+  },
+  {
+    "id": "GEN-08",
+    "modulo": "Carrinhos",
+    "caso": "Cadastrar carrinho contendo produtos duplicados no mesmo payload",
+    "tipo": "negativo",
+    "resultado_esperado": "Status 400 com mensagem 'Não é permitido possuir produto duplicado'"
+  },
+  {
+    "id": "GEN-09",
+    "modulo": "Carrinhos",
+    "caso": "Cadastrar carrinho solicitando quantidade de produto maior do que o estoque disponível",
+    "tipo": "borda",
+    "resultado_esperado": "Status 400 com mensagem 'Produto não possui quantidade suficiente'"
+  },
+  {
+    "id": "GEN-10",
+    "modulo": "Carrinhos",
+    "caso": "Cadastrar carrinho referenciando ID de produto inexistente",
+    "tipo": "negativo",
+    "resultado_esperado": "Status 400 com mensagem 'Produto não encontrado'"
+  }
+]
