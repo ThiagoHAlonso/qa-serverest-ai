@@ -1,0 +1,38 @@
+name: QA Pipeline
+
+# Quando o pipeline roda
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch: # permite rodar manualmente pelo botão "Run workflow" na aba Actions
+
+jobs:
+  testes-de-api:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar o código do repositório
+        uses: actions/checkout@v6
+
+      - name: Instalar o Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Rodar os testes de API (Newman)
+        run: npx --yes newman@6 run collection.json --reporters cli,json --reporter-json-export newman-report.json
+
+      - name: Gerar o dashboard de métricas
+        if: always()
+        run: node scripts/gerar-dashboard.js
+
+      - name: Publicar os relatórios
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: relatorios-qa
+          path: |
+            newman-report.json
+            reports/dashboard.html
+            reports/metricas.json
