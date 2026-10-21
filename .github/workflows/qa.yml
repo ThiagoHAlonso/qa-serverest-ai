@@ -8,6 +8,7 @@ on:
   workflow_dispatch: # permite rodar manualmente pelo botão "Run workflow" na aba Actions
 
 jobs:
+  # Job 1: testes de API (Postman/Newman) + dashboard de métricas
   testes-de-api:
     runs-on: ubuntu-latest
 
@@ -36,3 +37,34 @@ jobs:
             newman-report.json
             reports/dashboard.html
             reports/metricas.json
+
+  # Job 2: testes E2E (Cypress). Roda em paralelo com o job 1.
+  testes-e2e:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar o código do repositório
+        uses: actions/checkout@v6
+
+      - name: Instalar o Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      # Esta action já instala as dependências (npm ci) e roda o Cypress
+      - name: Rodar os testes E2E (Cypress)
+        uses: cypress-io/github-action@v7
+        with:
+          browser: chrome
+          spec: |
+            cypress/e2e/login.cy.js
+            cypress/e2e/cadastro-usuario.cy.js
+            cypress/e2e/cadastro-produto.cy.js
+
+      - name: Publicar os screenshots dos testes que falharam
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: cypress-screenshots
+          path: cypress/screenshots
+          if-no-files-found: ignore

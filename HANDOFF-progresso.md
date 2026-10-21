@@ -13,45 +13,46 @@ Portfólio de QA integrando ServeRest, Postman/Newman, Cypress e uma camada de I
 
 - [x] **Fase 0** - Setup do repositório
 - [x] **Fase 1** - Estratégia de QA
-- [x] **Fase 2** - Testes de API (Postman/Newman): 28 requests, 61 assertions, 0 falhas
+- [x] **Fase 2** - Testes de API (Postman/Newman): 28 requests HTTP, 61 assertions, 0 falhas
 - [x] **Fase 3** - Testes E2E (Cypress): 5 testes, 0 falhas
 - [x] **Fase 4** - Casos de teste e defeitos conhecidos documentados
 - [x] **Fase 5** - Camada de IA: Test Generator, Test Reviewer e Failure Analyzer (Gemini)
 - [x] **Fase 6** - Métricas: dashboard HTML gerado a partir do relatório do Newman
-- [ ] **Fase 7** - GitHub Actions (CI/CD) ← **PRÓXIMA**
+- [~] **Fase 7** - GitHub Actions (CI/CD): **EM ANDAMENTO** (ver abaixo)
 
-## Commits pendentes (conferir com `git log` e `git status` antes)
+## Fase 7 - GitHub Actions
 
-1. **Camada de IA.** Antes, adicionar a linha `newman-report.json` ao `.gitignore`. Depois:
-   ```
-   git add ai/ package.json package-lock.json HANDOFF-progresso.md .gitignore reports/sugestoes-de-teste.json reports/revisao-de-testes.md
-   git commit -m "feat: adiciona camada de IA com Gemini (Test Generator, Reviewer e Failure Analyzer)"
-   git push
-   ```
-2. **Dashboard de métricas** (substituir antes o HANDOFF da pasta por esta versão):
-   ```
-   git add scripts/gerar-dashboard.js HANDOFF-progresso.md
-   git commit -m "feat: adiciona dashboard de metricas gerado a partir do relatorio do Newman"
-   git push
-   ```
+Workflow em `.github/workflows/qa.yml` (a pasta precisa ter exatamente esse caminho). Gatilhos: push na `main`, pull request e execução manual (`workflow_dispatch`).
 
-**Nunca commitar:** `.env`, `newman-report.json`, `reports/dashboard.html`, `reports/metricas.json`, `reports/analise-de-falhas.json` (são gerados a cada execução).
+**Feito e validado:**
+- Job `testes-de-api`: checkout, Node 22, Newman, dashboard, upload do artifact `relatorios-qa` (dashboard.html, metricas.json, newman-report.json) e resumo com a tabela por módulo na página da execução. Execução #1 verde em 22 s: 28 requests, 61 assertions, 0 falhas (tempo médio 90 ms no GitHub contra ~290 ms local).
+
+**Escrito, aguardando a primeira execução real:**
+- Job `testes-e2e`: roda os 3 specs do Cypress (login, cadastro-usuario, cadastro-produto) com `cypress-io/github-action@v7` e Chrome. Em caso de falha, publica os screenshots como artifact `cypress-screenshots`. Roda em paralelo ao job de API. O `qa.yml` novo precisa ser commitado e enviado.
+
+**Versões das actions (verificadas em 2026-10):** `actions/checkout@v6`, `actions/setup-node@v6`, `actions/upload-artifact@v7`, `cypress-io/github-action@v7`. O GitHub removeu o Node 20 dos runners em setembro de 2026, então versões antigas (checkout/setup-node v4, cypress action v6) estão obsoletas. Conferir as versões antes de criar novos workflows.
+
+**Próximas sub-etapas:**
+1. Confirmar a primeira execução do job do Cypress (se falhar, copiar o log do passo que ficou vermelho).
+2. Rodar o Failure Analyzer só quando houver falha, usando o secret `GEMINI_API_KEY` (Settings > Secrets and variables > Actions, nunca imprimir a chave em log). O script precisa de `npm ci` no job para ter as dependências (`@google/generative-ai`, `dotenv`).
+3. Badge de status do pipeline no README.
+4. Opcional: publicar o dashboard com GitHub Pages; execução agendada (`schedule`).
+
+**Pendência opcional de higiene:** conferir com `git ls-files cypress/e2e` se os specs de exemplo do Cypress (`1-getting-started/`, `2-advanced-examples/`, `spec.cy.js`) estão versionados. Se estiverem, remover com `git rm -r` pra deixar o portfólio só com os testes autorais.
 
 ## Fase 5 - Camada de IA (COMPLETA)
 
-A API da Anthropic não funciona no plano gratuito via script (exige créditos pagos), então o projeto usa o **Google Gemini** (Google AI Studio), com camada gratuita via API. Chave em `.env` como `GEMINI_API_KEY`.
+A API da Anthropic não funciona no plano gratuito via script (exige créditos pagos), então o projeto usa o **Google Gemini** (Google AI Studio). Chave em `.env` como `GEMINI_API_KEY`. Modelo atual confirmado: `gemini-3.8-flash` (modelos antigos foram descontinuados; se der 404, o nome correto costuma aparecer na mensagem de erro). Todos os scripts têm retry automático para erros 503.
 
-Modelo atual confirmado: `gemini-3.8-flash`. Modelos antigos (`1.5`, `2.0`, `2.5`) estão indisponíveis; se der 404, o nome correto costuma aparecer na mensagem de erro. Todos os scripts têm retry automático (5 tentativas, espera crescente) para erros 503, comuns no tier gratuito.
+- `ai/test-generator.js`: gera 10 cenários novos em `reports/sugestoes-de-teste.json`.
+- `ai/test-reviewer.js`: revisa specs do Cypress e a collection em `reports/revisao-de-testes.md`.
+- `ai/failure-analyzer.js`: lê `newman-report.json` e classifica as falhas em `reports/analise-de-falhas.json`.
 
-- `ai/test-generator.js`: lê `CASOS-DE-TESTE.md` e `ESTRATEGIA-QA.md`, pede 10 cenários novos, salva em `reports/sugestoes-de-teste.json`.
-- `ai/test-reviewer.js`: lê os specs do Cypress e o `collection.json`, gera a revisão em `reports/revisao-de-testes.md`.
-- `ai/failure-analyzer.js`: lê `newman-report.json` e classifica cada falha (bug real, flaky, ambiente, teste desatualizado), salva em `reports/analise-de-falhas.json`. Validado com falhas reais.
-
-Melhoria futura: agrupar falhas em cascata por causa raiz (hoje devolve uma linha por falha).
+Melhoria futura: agrupar falhas em cascata por causa raiz.
 
 ## Fase 6 - Métricas (COMPLETA)
 
-`scripts/gerar-dashboard.js` lê `newman-report.json` e `collection.json` e gera `reports/dashboard.html` e `reports/metricas.json`.
+`scripts/gerar-dashboard.js` lê `newman-report.json` e `collection.json` e gera `reports/dashboard.html` e `reports/metricas.json`. Quando roda no GitHub Actions, também escreve o resumo da execução (`GITHUB_STEP_SUMMARY`).
 
 ```
 npx newman run collection.json --reporters cli,json --reporter-json-export newman-report.json
@@ -59,37 +60,22 @@ node scripts/gerar-dashboard.js
 start reports/dashboard.html
 ```
 
-Mostra: requests HTTP executados, assertions, taxa de sucesso, duração, tempo médio de resposta, resultado por módulo, requests mais lentos e, quando há falhas, a lista delas com a classificação da IA (só se a análise for mais nova que o relatório).
-
-Validado com dados reais: 28 requests HTTP, 61 assertions, 100%. Por módulo: Login 2 requests e 6 assertions, Usuários 9 e 21, Produtos 6 e 14, Carrinhos 10 e 20.
-
-Peculiaridade do Newman: o request que usa `pm.sendRequest` no pre-request (Login) aparece duas vezes em `run.executions`, duplicando as assertions. O script agrupa por módulo + request e confere se a soma dos módulos bate com o total, avisando se não bater. O total de 28 requests HTTP inclui 1 chamada feita por script (criação do admin); a tabela por módulo mostra 27.
-
-## Próximo passo: Fase 7 - GitHub Actions
-
-Criar `.github/workflows/qa.yml`. Ordem sugerida, uma sub-etapa por vez:
-
-1. Workflow mínimo: checkout, setup-node, `npm ci`, Newman rodando a collection.
-2. Gerar o dashboard e publicar como artifact (`actions/upload-artifact`).
-3. Adicionar o Cypress (`cypress-io/github-action`).
-4. Rodar o Failure Analyzer só quando houver falha, usando o secret `GEMINI_API_KEY` (Settings > Secrets and variables > Actions).
-5. Badge de status no README.
-
-Cuidados: o ServeRest público é compartilhado (os testes já criam os próprios usuários); o Gemini gratuito dá 503 de vez em quando (retry já existe); nunca imprimir a chave em log.
+O Newman registra duas execuções do request que usa `pm.sendRequest` no pre-request (Login); o script agrupa por módulo + request e confere se a soma bate com o total.
 
 ## Estrutura atual do repositório
 
 ```
 qa-serverest-ai/
+├── .github/workflows/qa.yml       pipeline do GitHub Actions
 ├── collection.json                28 requests, 61 assertions (na raiz, não em postman/)
 ├── cypress/
-│   ├── e2e/                       3 specs, 5 testes
+│   ├── e2e/                       login, cadastro-usuario, cadastro-produto
 │   ├── support/pages/             LoginPage, CadastroUsuarioPage, CadastroProdutoPage
 │   └── fixtures/produto.png
 ├── ai/                            test-generator.js, test-reviewer.js, failure-analyzer.js
 ├── scripts/gerar-dashboard.js
 ├── reports/                       sugestoes-de-teste.json, revisao-de-testes.md (versionados)
-│                                  dashboard.html, metricas.json, analise-de-falhas.json (gerados, não versionados)
+│                                  dashboard.html, metricas.json, analise-de-falhas.json (gerados, fora do Git)
 ├── .env                           GEMINI_API_KEY (protegido pelo .gitignore)
 ├── .gitignore, cypress.config.js, package.json
 └── README.md, ESTRATEGIA-QA.md, CASOS-DE-TESTE.md, DEFEITOS-CONHECIDOS.md, HANDOFF-progresso.md
@@ -108,7 +94,7 @@ qa-serverest-ai/
 
 ## Regras de ouro aprendidas
 
-1. **A fonte da verdade é o `collection.json` do repositório, não a cópia dentro do Postman.** Exportar do Postman sobrescreve o arquivo com a versão antiga e traz de volta os bugs já corrigidos. Para recuperar: `git restore collection.json`.
+1. **A fonte da verdade é o `collection.json` do repositório, não a cópia dentro do Postman.** Exportar do Postman sobrescreve o arquivo e traz de volta bugs já corrigidos. Para recuperar: `git restore collection.json`.
 2. Edição feita pelo Claude direto no arquivo precisa ser copiada pra pasta local antes do próximo commit.
 3. Debugar por causa raiz, não falha por falha.
 4. No Cypress: inspecionar os seletores reais na página antes de escrever o código.
@@ -118,4 +104,6 @@ qa-serverest-ai/
 8. Nomes de modelo do Gemini mudam com frequência; se der 404, a mensagem de erro costuma apontar o nome atual.
 9. Preferir baixar e trocar o arquivo inteiro a colar heredocs no PowerShell.
 10. Arquivos gerados a cada execução (relatórios, dashboard) ficam fora do Git.
-11. Teste com dados simulados não pega as peculiaridades do formato real (foi o caso do Login duplicado no relatório do Newman). Sempre validar um script novo com a saída real e deixar conferências automáticas no próprio código.
+11. Teste com dados simulados não pega as peculiaridades do formato real. Validar um script novo com a saída real e deixar conferências automáticas no código.
+12. Versões de actions do GitHub mudam e ficam obsoletas. Conferir as versões atuais antes de escrever um workflow e validar o arquivo com `actionlint`.
+13. O workflow só é lido se estiver em `.github/workflows/`. O push que adiciona ou altera o workflow é o gatilho da execução.
