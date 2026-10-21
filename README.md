@@ -33,9 +33,9 @@ ServeRest (alvo)
 - [x] Fase 2 — Testes de API (Postman/Newman) — 28 requests, 61 assertions, 0 falhas
 - [x] Fase 3 — Testes E2E (Cypress) — 5 testes, 0 falhas
 - [x] Fase 4 — Casos de teste e defeitos conhecidos
-- [ ] Fase 5 — Camada de IA
-- [ ] Fase 6 — Métricas
-- [ ] Fase 7 — GitHub Actions
+- [x] Fase 5 — Camada de IA
+- [x] Fase 6 — Métricas
+- [ ] Fase 7 — GitHub Actions - EM ANDAMENTO 
 
 ## Estrutura de pastas
 
