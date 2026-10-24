@@ -1,5 +1,7 @@
 # QA Pipeline — ServeRest + Automação + IA
 
+[![QA Pipeline](https://github.com/ThiagoHAlonso/qa-serverest-ai/actions/workflows/qa.yml/badge.svg)](https://github.com/ThiagoHAlonso/qa-serverest-ai/actions/workflows/qa.yml)
+
 Projeto de portfólio que demonstra uma estratégia de QA completa sobre a API [ServeRest](https://serverest.dev/), combinando testes de API, testes E2E e uma camada de ferramentas de IA para geração, revisão e triagem de testes.
 
 ## Objetivo
