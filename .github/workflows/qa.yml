@@ -6,9 +6,14 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch: # permite rodar manualmente pelo botão "Run workflow" na aba Actions
+    inputs:
+      simular_falha:
+        description: 'Simular uma falha de teste para demonstrar o Failure Analyzer (IA)'
+        type: boolean
+        default: false
 
 jobs:
-  # Job 1: testes de API (Postman/Newman) + dashboard de métricas
+  # Job 1: testes de API (Postman/Newman), análise de falhas por IA e dashboard
   testes-de-api:
     runs-on: ubuntu-latest
 
@@ -21,8 +26,63 @@ jobs:
         with:
           node-version: 22
 
+      # Só roda quando você marca "simular falha" ao executar o workflow manualmente
+      - name: Criar uma versão da collection com uma falha proposital
+        if: ${{ inputs.simular_falha }}
+        run: |
+          node - << 'EOF'
+          const fs = require('fs');
+          const colecao = JSON.parse(fs.readFileSync('collection.json', 'utf-8'));
+          let alterado = false;
+          (function percorrer(itens) {
+            itens.forEach((item) => {
+              if (item.item) return percorrer(item.item);
+              if (item.name !== 'GET - Listar Todos os Usuários') return;
+              (item.event || []).forEach((ev) => {
+                if (ev.listen !== 'test') return;
+                ev.script.exec = ev.script.exec.map((linha) => {
+                  if (!alterado && linha.includes('have.status(200)')) {
+                    alterado = true;
+                    return linha.replace('have.status(200)', 'have.status(201)');
+                  }
+                  return linha;
+                });
+              });
+            });
+          })(colecao.item);
+          if (!alterado) {
+            console.error('Não encontrei o teste que deveria ser alterado.');
+            process.exit(1);
+          }
+          fs.writeFileSync('collection-com-falha.json', JSON.stringify(colecao, null, 2));
+          console.log('collection-com-falha.json criada: a listagem de usuários agora espera status 201.');
+          EOF
+
       - name: Rodar os testes de API (Newman)
-        run: npx --yes newman@6 run collection.json --reporters cli,json --reporter-json-export newman-report.json
+        env:
+          COLECAO: ${{ inputs.simular_falha && 'collection-com-falha.json' || 'collection.json' }}
+        run: npx --yes newman@6 run "$COLECAO" --reporters cli,json --reporter-json-export newman-report.json
+
+      # Só roda quando algum passo anterior falhou. Se a análise der erro, o pipeline continua.
+      - name: Analisar as falhas com IA (Gemini)
+        if: failure()
+        continue-on-error: true
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          if [ -z "$GEMINI_API_KEY" ]; then
+            echo "GEMINI_API_KEY não está configurada nos secrets do repositório. Pulando a análise."
+            exit 0
+          fi
+          npm ci --ignore-scripts
+          node ai/failure-analyzer.js
+          jq -r '
+            "## Análise de falhas pela IA (Gemini)",
+            "",
+            "| Falha | Classificação | Justificativa |",
+            "|---|---|---|",
+            (.[] | "| " + .falha + " | " + .classificacao + " | " + (.justificativa | gsub("[\\n|]"; " ")) + " |")
+          ' reports/analise-de-falhas.json >> "$GITHUB_STEP_SUMMARY"
 
       - name: Gerar o dashboard de métricas
         if: always()
@@ -37,6 +97,7 @@ jobs:
             newman-report.json
             reports/dashboard.html
             reports/metricas.json
+            reports/analise-de-falhas.json
 
   # Job 2: testes E2E (Cypress). Roda em paralelo com o job 1.
   testes-e2e:
