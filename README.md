@@ -42,6 +42,24 @@ O workflow [`qa.yml`](./.github/workflows/qa.yml) roda a cada push na `main`, a 
 - **Demonstração da IA:** em **Actions > QA Pipeline > Run workflow**, marque "Simular uma falha de teste". O pipeline planta uma falha proposital, fica vermelho e mostra a análise da IA no resumo da execução.
 - **Secret:** o passo da IA usa `GEMINI_API_KEY` (Settings > Secrets and variables > Actions). Sem ele, o passo é apenas pulado.
 
+## Demonstração
+
+**Pipeline completo.** A cada push, os testes de API e os testes E2E rodam em paralelo e o resultado aparece no resumo da execução.
+
+![Pipeline completo passando](docs/img/pipeline-verde.png)
+
+**Failure Analyzer em ação.** Com a falha simulada, o pipeline fica vermelho de propósito e a IA classifica a falha direto no resumo da execução.
+
+![Análise de falhas pela IA](docs/img/failure-analyzer-resumo.png)
+
+**Histórico de execuções.** As execuções vermelhas são demonstrações manuais da falha simulada; as disparadas por push ficam verdes.
+
+![Execuções do pipeline](docs/img/pipeline-execucoes.png)
+
+**Dashboard de métricas.**
+
+![Dashboard de métricas](docs/img/dashboard.png)
+
 ## Camada de IA (Google Gemini)
 
 | Script | O que faz | Saída |
